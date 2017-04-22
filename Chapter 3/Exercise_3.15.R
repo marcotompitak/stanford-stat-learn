@@ -28,8 +28,10 @@ summary(multi_fit)
 # for some of the predictors, especially nox:
 estimates_multiple = coef(summary(multi_fit))[names(Boston[,-1]),"Estimate"]
 par(mfrow=c(1,1))
-plot(estimates_single, estimates_multiple)
+plot(estimates_single, estimates_multiple, xlab = "Single Regression Slopes", ylab = "Multiple Regression Slopes")
 abline(0,1, col="gray") # Ideally the points lie on this line
+dev.copy(png,'./Output/Ex15_Single_vs_Multiple_estimattes.png', width = 15, height = 15, units = 'cm', res = 300); dev.off()
+
 
 # We now generate third-order polynomial fits, to assess non-linearities.
 for(x in names(Boston[,-1][,-3])) {
