@@ -1,0 +1,63 @@
+Exercise 6.9
+------------
+
+Setting up the data:
+```{r results="hide", message=FALSE}
+library(ISLR)
+library(boot)
+library(glmnet)
+library(pls)
+attach(College)
+train = sample(1:777, 600, replace = FALSE)
+CTrain = College[train, ]
+CTest = College[-train, ]
+CTrainmat = model.matrix(Apps~., data = CTrain)
+CTestmat = model.matrix(Apps~., data = CTest)
+ytrain = CTrain$Apps
+```
+
+Basic least squares fit:
+```{r}
+fit.ls = lm(Apps~., data = CTrain)
+pred.ls = predict(fit.ls, CTest)
+sqrt(mean((as.vector(pred.ls) - CTest$Apps)^2))
+```
+
+The ridge regression actually yields a slightly worse result:
+```{r}
+fit.ridge = glmnet(CTrainmat, CTrain$Apps, alpha = 0)
+cv.ridge = cv.glmnet(CTrainmat, CTrain$Apps, alpha = 0)
+pred.ridge = predict(cv.ridge, CTestmat)
+sqrt(mean((as.vector(pred.ridge) - CTest$Apps)^2))
+```
+
+As does lasso:
+```{r}
+fit.lasso = glmnet(CTrainmat, CTrain$Apps, alpha = 0)
+cv.lasso = cv.glmnet(CTrainmat, CTrain$Apps, alpha = 0)
+pred.lasso = predict(cv.lasso, CTestmat)
+sqrt(mean((as.vector(pred.lasso) - CTest$Apps)^2))
+```
+
+This is because the unregularized model actually works best, also on the training data:
+```{r}
+par(mfrow=c(1,2))
+plot(cv.ridge)
+title("Ridge", line = -1)
+plot(cv.lasso)
+title("Lasso", line = -1)
+```
+
+Using PCR, we similarly see that we get the best results if we simply incorporate all components:
+```{r}
+fit.pcr = pcr(Apps~., data = CTrain, scale = TRUE , validation = "CV")
+validationplot(fit.pcr, val.type = "MSEP")
+```
+
+Same for PLS:
+```{r}
+fit.pls = plsr(Apps~., data = CTrain, scale = TRUE , validation = "CV")
+validationplot(fit.pls, val.type = "MSEP")
+```
+
+In the end, we find that we can do no better than our original least squares result.

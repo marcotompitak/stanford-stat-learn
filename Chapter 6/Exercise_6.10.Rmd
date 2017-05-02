@@ -1,0 +1,61 @@
+Exercise 6.10
+-------------
+
+Generating the data. We create 20 predictors, of which only 5 are actually correlated with our response:
+```{r results="hide", message=FALSE}
+library(leaps)
+set.seed(1)
+beta = 10*rnorm(20)
+zeroind = sample(1:20, 15, replace = FALSE)
+beta[zeroind] = 0
+X = matrix(runif(20*1000), 1000, 20)
+Y = X%*%beta + rnorm(1000)
+XY = data.frame(X,Y)
+
+train = sample(1:1000, 100, replace = FALSE)
+```
+
+We now perform best subset selection. 
+```{r}
+predict.regsubsets = function(object, newdata, id, ...) {
+  form = as.formula(object$call[[2]])
+  mat = model.matrix(form, newdata)
+  coefi = coef(object, id = id)
+  mat[, names(coefi)] %*% coefi
+}
+
+regfit.full = regsubsets(Y~., data = XY[train, ], nvmax = 20)
+test_errors = rep(0, 20)
+for(i in 1:20) {
+  test_errors[i] = sqrt(mean((predict(regfit.full, XY[-train, ], i) - Y[-train])^2))
+}
+train_errors = rep(0, 20)
+for(i in 1:20) {
+  train_errors[i] = sqrt(mean((predict(regfit.full, XY[train, ], i) - Y[train])^2))
+}
+plot(train_errors, type = "l")
+lines(test_errors, col = "red")
+```
+
+The MSE on the test set shows that the model with 5 parameters works best, and the chosen 5-parameter model has fitted the coefficients well:
+```{r}
+which(test_errors == min(test_errors))
+as.vector(coef(regfit.full, 5))[-1]
+beta[beta != 0]
+```
+
+Considering the accuracy of the fitted parameters, we also see that the 5-parameter model performs best:
+```{r}
+beta_errors = rep(0, 20)
+for(i in 1:20) {
+  coefs = coef(regfit.full, i)
+  beta_pred = rep(0, 20)
+  for(c in names(coefs)[-1]) {
+    c_ind = as.numeric(gsub("X", "", c))
+    beta_pred[c_ind] = coefs[c]
+  }
+  beta_errors[i] = mean((beta_pred - beta)^2)
+}
+plot(beta_errors)
+```
+

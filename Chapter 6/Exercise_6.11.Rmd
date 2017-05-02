@@ -1,0 +1,90 @@
+Exercise 6.11
+------------
+
+We essentially just perform the same set of analyses as in the previous exercises:
+
+Setting up the data:
+```{r results="hide", message=FALSE}
+set.seed(1)
+library(MASS)
+library(leaps)
+library(boot)
+library(glmnet)
+library(pls)
+attach(Boston)
+train = sample(1:506, 400, replace = FALSE)
+BTrain = Boston[train, ]
+BTest = Boston[-train, ]
+BTrainmat = model.matrix(crim~., data = BTrain)
+BTestmat = model.matrix(crim~., data = BTest)
+ytrain = BTrain$crim
+ytest = BTest$crim
+
+predict.regsubsets = function(object, newdata, id, ...) {
+  form = as.formula(object$call[[2]])
+  mat = model.matrix(form, newdata)
+  coefi = coef(object, id = id)
+  mat[, names(coefi)] %*% coefi
+}
+```
+
+Basic least squares fit:
+```{r}
+fit.ls = lm(crim~., data = BTrain)
+pred.ls = predict(fit.ls, BTest)
+sqrt(mean((as.vector(pred.ls) - BTest$crim)^2))
+```
+
+Ridge regression:
+```{r}
+fit.ridge = glmnet(BTrainmat, BTrain$crim, alpha = 0)
+cv.ridge = cv.glmnet(BTrainmat, BTrain$crim, alpha = 0)
+pred.ridge = predict(cv.ridge, BTestmat)
+sqrt(mean((as.vector(pred.ridge) - BTest$crim)^2))
+```
+
+Lasso:
+```{r}
+fit.lasso = glmnet(BTrainmat, BTrain$crim, alpha = 0)
+cv.lasso = cv.glmnet(BTrainmat, BTrain$crim, alpha = 0)
+pred.lasso = predict(cv.lasso, BTestmat)
+sqrt(mean((as.vector(pred.lasso) - BTest$crim)^2))
+```
+
+The regularized fits perform worse than the full least squares fit:
+```{r}
+par(mfrow=c(1,2))
+plot(cv.ridge)
+title("Ridge", line = -1)
+plot(cv.lasso)
+title("Lasso", line = -1)
+```
+
+Same with best subset selection, although we also already do well with only 4 predictors:
+```{r}
+regfit.full = regsubsets(crim~., data = BTrain, nvmax = 13)
+test_errors = rep(0, 13)
+for(i in 1:13) {
+  test_errors[i] = sqrt(mean((predict(regfit.full, BTest, i) - ytest)^2))
+}
+plot(test_errors, type = "l")
+```
+
+Using PCR we also find that we may already do well with a smaller subset of predictors:
+```{r}
+fit.pcr = pcr(crim~., data = BTrain, scale = TRUE , validation = "CV")
+validationplot(fit.pcr, val.type = "RMSEP")
+```
+
+A reasonable choice of model is the 4-parameter subset model. Its performance is similar to that of the PCR model, but it will be easier to interpret. Examining this model in more detail, it seems that we find a reasonably predictive, but simple model, if we employ just the predictors zn, dis, rad and medv:
+```{r}
+coef(regfit.full, 4)
+```
+
+Using just these predictors, we have a much simpler model, but only a slightly worse RMSE on the test data:
+```{r}
+fit.ls = lm(crim~zn+dis+rad+medv, data = BTrain)
+pred.ls = predict(fit.ls, BTest)
+sqrt(mean((as.vector(pred.ls) - BTest$crim)^2))
+```
+
