@@ -33,8 +33,8 @@ sqrt(mean((as.vector(pred.ridge) - CTest$Apps)^2))
 
 As does lasso:
 ```{r}
-fit.lasso = glmnet(CTrainmat, CTrain$Apps, alpha = 0)
-cv.lasso = cv.glmnet(CTrainmat, CTrain$Apps, alpha = 0)
+fit.lasso = glmnet(CTrainmat, CTrain$Apps, alpha = 1)
+cv.lasso = cv.glmnet(CTrainmat, CTrain$Apps, alpha = 1)
 pred.lasso = predict(cv.lasso, CTestmat)
 sqrt(mean((as.vector(pred.lasso) - CTest$Apps)^2))
 ```

@@ -45,8 +45,8 @@ sqrt(mean((as.vector(pred.ridge) - BTest$crim)^2))
 
 Lasso:
 ```{r}
-fit.lasso = glmnet(BTrainmat, BTrain$crim, alpha = 0)
-cv.lasso = cv.glmnet(BTrainmat, BTrain$crim, alpha = 0)
+fit.lasso = glmnet(BTrainmat, BTrain$crim, alpha = 1)
+cv.lasso = cv.glmnet(BTrainmat, BTrain$crim, alpha = 1)
 pred.lasso = predict(cv.lasso, BTestmat)
 sqrt(mean((as.vector(pred.lasso) - BTest$crim)^2))
 ```
