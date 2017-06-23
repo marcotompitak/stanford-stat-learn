@@ -1,0 +1,41 @@
+Exercise 8.11
+-------------
+
+```{r}
+library(ISLR)
+attach(Caravan)
+library(gbm)
+train = Caravan[1:1000,]
+test = Caravan[1001:5822,]
+train$Purchase = as.numeric(train$Purchase)-1
+test$Purchase = as.numeric(test$Purchase)-1
+set.seed(0)
+```
+
+Boosting:
+
+```{r}
+boost = gbm(Purchase~., data=train, n.trees=1000, shrinkage=0.01)
+pred = predict(boost, newdata=test, n.trees=1000, type="response")>0.2
+table(pred, test$Purchase)
+mean(pred == test$Purchase)
+```
+
+The results are worse using KNN...
+
+```{r}
+library(class)
+pred_knn = knn(within(train, rm(Purchase)), within(test, rm(Purchase)), train$Purchase)
+table(pred_knn, test$Purchase)
+mean(pred_knn == test$Purchase)
+```
+
+...and logistic regression.
+
+```{r}
+glmfit = glm(Purchase~., data = train, family = "binomial")
+pred_logreg = predict(glmfit, test, type="response")>0.2
+table(pred_logreg, test$Purchase)
+mean(pred_logreg == test$Purchase)
+```
+

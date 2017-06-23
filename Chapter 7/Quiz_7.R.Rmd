@@ -1,0 +1,26 @@
+Quiz of Chapter 7 R Sessions
+----------------------------
+
+7.R.R1
+```{r}
+load("7.R.RData")
+plot(x,y)
+```
+
+```{r}
+summary(lm(y~x))
+```
+
+7.R.R2:
+```{r}
+summary(lm(y~x+I(x^2)))
+```
+
+Fitted curves:
+```{r}
+plot(x,y)
+lines(x[order(x)],cbind(1,x)[order(x),]%*%coef(summary(lm(y~x)))[, "Estimate"], col="blue")
+lines(x[order(x)],cbind(1,x,x^2)[order(x),]%*%coef(summary(lm(y~x+I(x^2))))[, "Estimate"], col="red")
+legend("topright", legend = c("Linear", "Quadratic"), lty = c(1,1), col = c("blue", "red"))
+```
+

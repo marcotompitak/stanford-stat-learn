@@ -1,0 +1,73 @@
+Exercise 8.8
+------------
+
+Setting up:
+
+```{r}
+library(tree)
+library(ISLR)
+attach(Carseats)
+set.seed(1)
+train = sample(1:nrow(Carseats), nrow(Carseats)/2)
+```
+
+Fitting a single tree:
+
+```{r}
+treefit = tree(Sales~., data=Carseats[train,])
+pred = predict(treefit, newdata = Carseats[-train,])
+mean((pred - Carseats[-train, "Sales"])^2)
+```
+
+Pruning helps somewhat; it seems the optimal tree size is 11:
+
+```{r}
+treecv = cv.tree(treefit)
+plot(treecv$size, treecv$dev, type="b")
+```
+
+We don't actually find a smaller error on the test set we chose, but we don't lose much:
+
+```{r}
+prunedfit = prune.tree(treefit, best = 11)
+pred = predict(prunedfit, newdata = Carseats[-train,])
+mean((pred - Carseats[-train, "Sales"])^2)
+```
+
+Bagging is just Random Forests using all predictors at every split. About 20 trees seems to be enough:
+
+```{r}
+library(randomForest)
+testerror = rep(0, 100)
+for(ntree in 1:100) {
+  bagfit = randomForest(Sales~., data = Carseats[train,], mtry = 10, ntree = ntree)
+  pred = predict(bagfit, newdata = Carseats[-train,])
+  testerror[ntree] = mean((pred - Carseats[-train, "Sales"])^2)
+}
+plot(testerror, type = "l")
+
+```
+
+Price is the most important predictor:
+
+```{r}
+bagfit = randomForest(Sales~., data = Carseats[train,], mtry = 10, ntree = 20)
+varImpPlot(bagfit)
+```
+
+Doing random forests requires tuning mtry as well. We don't seem to be able to do any better than with bagging:
+
+```{r}
+testerror = matrix(rep(0, len=44), nrow=11)
+for(mtry in seq(4, 10, 2)) {
+  for(ntree in seq(1, 101, 10)) {
+    RF = randomForest(Sales~., data = Carseats[train,], mtry = mtry, ntree = ntree)
+    pred = predict(RF, newdata = Carseats[-train,])
+    testerror[(ntree-1)/10+1, mtry/2-1] = mean((pred - Carseats[-train, "Sales"])^2)
+  }
+}
+matplot(testerror, type="l", col=c(1,2,3,4), xaxt="n", xlab = "ntree")
+axis(1, at = 1:11, labels = seq(1,101,10))
+legend("topright", c("mtry = 4", "mtry = 6", "mtry = 8", "mtry = 10"), col=c(1,2,3,4), lwd=1)
+```
+

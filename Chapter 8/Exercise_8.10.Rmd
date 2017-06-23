@@ -1,0 +1,65 @@
+Exercise 8.10
+-------------
+
+```{r}
+library(ISLR)
+attach(Hitters)
+library(gbm)
+Data = na.omit(Hitters)
+train = Data[1:200,]
+test = Data[201:263,]
+set.seed(0)
+```
+
+```{r}
+mse=seq(1,30)
+msetest=seq(1,30)
+for(l in 1:30) {
+  boost = gbm(Salary~., data=train, distribution="gaussian", n.trees=1000, shrinkage=l/1000)
+  pred = predict(boost, newdata=train, n.trees=1000)
+  mse[l] = mean((pred-train["Salary"])^2)
+  pred = predict(boost, newdata=test, n.trees=1000)
+  msetest[l] = mean((pred-test["Salary"])^2)
+}
+plot((1:30)/1000,mse, type = "l", col="red")
+lines((1:30)/1000,msetest, col="blue")
+```
+
+A good value seems to be 0.009:
+
+```{r}
+boost = gbm(Salary~., data=train, distribution="gaussian", n.trees=10000, shrinkage=0.009)
+pred = predict(boost, newdata=test, n.trees=1000)
+sqrt(mean((pred-test["Salary"])^2))
+```
+
+The boosted tree model performs better than a basic least squares fit but worse than a lasso fit:
+```{r}
+library(glmnet)
+fit.ls = lm(Salary~., data = train)
+pred.ls = predict(fit.ls, test)
+sqrt(mean((pred.ls-test["Salary"])^2))
+
+trainmat = model.matrix(Salary~., data = train)
+testmat = model.matrix(Salary~., data = test)
+
+fit.lasso = glmnet(trainmat, train$Salary, alpha = 1)
+cv.lasso = cv.glmnet(trainmat, train$Salary, alpha = 1)
+pred.lasso = predict(cv.lasso, testmat)
+sqrt(mean((as.vector(pred.lasso) - test$Salary)^2))
+```
+
+In this case, bagging performs somewhat better than boosting:
+
+```{r}
+library(randomForest)
+testerror = rep(0, 100)
+for(ntree in 1:100) {
+  bagfit = randomForest(Salary~., data = train, mtry = 19, ntree = ntree)
+  pred = predict(bagfit, newdata = test)
+  testerror[ntree] = mean((pred - test$Salary)^2)
+}
+plot(testerror, type = "l")
+bagfit = randomForest(Salary~., data = train, mtry = 19, ntree = 20)
+sqrt(mean((pred - test$Salary)^2))
+```

@@ -1,0 +1,53 @@
+Exercise 8.9
+------------
+
+Setting up:
+
+```{r}
+library(tree)
+library(ISLR)
+attach(OJ)
+set.seed(1)
+train = sample(1:nrow(OJ), 800)
+```
+
+Fitting a single tree:
+
+```{r}
+treefit = tree(Purchase~., data=OJ[train,])
+pred = predict(treefit, newdata = OJ[-train,], type="class")
+summary(treefit)
+table(pred, OJ[-train, "Purchase"])
+treefit
+plot(treefit)
+text(treefit)
+```
+
+Cross validation indicates 5 terminal nodes should be enough:
+
+```{r}
+plot(cv.tree(treefit, FUN = prune.misclass))
+```
+
+Pruning the tree:
+
+```{r}
+treefitpruned = prune.misclass(treefit, best = 5)
+plot(treefitpruned); text(treefitpruned)
+```
+
+Both the training and test errors are exactly the same, so we have lost nothing by pruning but gained simplicity. The pruning seems to have only eliminated useless splits that led to the same class anyway.
+
+```{r}
+pred_train_pruned = predict(treefitpruned, newdata = OJ[train,], type="class")
+table(pred_train_pruned, OJ[train, "Purchase"])
+
+pred_train_unpruned = predict(treefit, newdata = OJ[train,], type="class")
+table(pred_train_unpruned, OJ[train, "Purchase"])
+
+pred_test_pruned = predict(treefitpruned, newdata = OJ[-train,], type="class")
+table(pred_test_pruned, OJ[-train, "Purchase"])
+
+pred_test_unpruned = predict(treefit, newdata = OJ[-train,], type="class")
+table(pred_test_unpruned, OJ[-train, "Purchase"])
+```
