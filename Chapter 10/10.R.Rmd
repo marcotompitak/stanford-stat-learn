@@ -1,0 +1,31 @@
+Calculations for Exercises 10.R
+-------------------------------
+
+Loading in the data:
+
+```{r}
+load("10.R.RData")
+xall = rbind(x, x.test)
+```
+
+
+```{r}
+pca = prcomp(xall, scale = TRUE)
+xrot = pca$x
+xrot_train = data.frame(xrot[1:300,1:5])
+xrot_test = data.frame(xrot[301:1300,1:5])
+xy_train = xrot_train
+xy_train["y"] = y
+fit = lm(y~., data = xy_train)
+pred = predict(fit, xrot_test)
+mean((pred - y.test)^2)
+```
+
+```{r}
+xy_train = data.frame(x)
+xy_train["y"] = y
+fit = lm(y~., data = xy_train)
+pred = predict(fit, x.test)
+mean((pred - y.test)^2)
+```
+

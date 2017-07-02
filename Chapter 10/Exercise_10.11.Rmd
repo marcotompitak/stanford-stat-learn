@@ -1,0 +1,41 @@
+Exercise 10.11
+--------------
+
+Applying hierarchical clustering with different linkage methods leads to different dendrograms that all show that there indeed seem to be two groups in terms of distance, but none of the methods provides a tree where a simple cut separates the two:
+
+```{r}
+# Loading the data
+data = read.csv("Ch10Ex11.csv", header = F)
+
+# Correlation is calculated among columns, which in the dataset represent the samples
+distmat = as.dist(1-cor(data))
+
+# Clustering
+clust_complete = hclust(distmat, method = "complete")
+clust_single = hclust(distmat, method = "single")
+clust_average = hclust(distmat, method = "average")
+plot(clust_complete)
+plot(clust_single)
+plot(clust_average)
+```
+
+We can find the most important genes by calculating a per-gene inter-cluster distance metric for all genes and sorting the genes by this metric. Here I chose to use for each gene the minimal distance between the two groups. Ordering by this metric, the 5 most important genes are 535, 600, 589, 514, 508:
+
+```{r}
+mindist = rep(0, 1000)
+for ( gene in 1:1000 ) {
+  for ( i in 1:20 ) {
+    for ( j in 21:40 ) {
+      d = abs(data[gene, i] - data[gene, j])
+      if ( mindist[gene] == 0 ) {
+        mindist[gene] = d
+      }
+      else if ( d < mindist[gene] ) {
+        mindist[gene] = d
+      }
+    }
+  }
+}
+order(mindist, decreasing = TRUE)[1:5]
+```
+

@@ -1,0 +1,97 @@
+Chapter 9 Quiz
+--------------
+
+Setting up:
+
+```{r}
+library(e1071)
+set.seed(0)
+```
+
+Some functions to generate our data:
+
+```{r}
+gen_xy = function(y) {
+  if (y == 0) { return(append(rnorm(10, mean = 0, sd = 1), y)) }
+  else if (y == 1) {return(append(rnorm(10, c(1,1,1,1,1,0,0,0,0,0), sd = 1), y))  }
+  else return(-1)
+}
+
+gen_train = function() {
+  xymat = matrix(0, 100, 11)
+  for (i in 1:50) {
+    xymat[i,] = gen_xy(0)
+  }
+  for( i in 51:100 ) {
+    xymat[i,] = gen_xy(1)
+  }
+  df = data.frame(xymat)
+  colnames(df) = append(paste("x", 1:10, sep = ""), "y")
+  return(df)
+}
+
+gen_test = function(n) {
+  xymat = matrix(0, n, 11)
+  for (i in 1:n) {
+    y = sample.int(2, size = 1) - 1
+    xymat[i,] = gen_xy(y)
+  }
+  df = data.frame(xymat)
+  colnames(df) = append(paste("x", 1:10, sep = ""), "y")
+  return(df)
+}
+```
+
+Setting up a large test set:
+
+```{r}
+test_set = gen_test(10000)
+dim(test_set)
+```
+
+Setting up the MC:
+
+```{r}
+MC_num = 10
+```
+
+Running the MC and keeping track of the errors:
+
+```{r}
+err = rep(0, MC_num)
+for (i in 1:MC_num) {
+  train_set = gen_train()
+  fit = svm(factor(y)~., data = train_set, scale = TRUE, kernel = 'radial', cost = 1)
+  pred = predict(fit, test_set[, 1:10])
+  err[i] = 1-mean(pred == test_set$y)
+}
+mean(err)
+```
+
+Now with a linear kernel:
+
+```{r}
+err = rep(0, MC_num)
+for (i in 1:MC_num) {
+  train_set = gen_train()
+  fit = svm(factor(y)~., data = train_set, scale = TRUE, kernel = 'linear', cost = 1)
+  pred = predict(fit, test_set[, 1:10])
+  err[i] = 1-mean(pred == test_set$y)
+}
+mean(err)
+```
+
+And now using logistic regression:
+
+```{r}
+err = rep(0, MC_num)
+for (i in 1:MC_num) {
+  train_set = gen_train()
+  fit = glm(y~., data = train_set, family=binomial)
+  pred = ifelse(predict(fit, newdata = test_set[, 1:10], type = "response") > 0.5, 1, 0)
+  err[i] = 1-mean(pred == test_set$y)
+}
+mean(err)
+
+```
+

@@ -1,0 +1,53 @@
+Exercise 10.10
+--------------
+
+Generating the data:
+
+```{r}
+set.seed(1)
+classmeans = matrix(c(rnorm(140, sd = 0.1), rnorm(10, sd = 1.5)), nrow = 3, ncol = 50)
+x = matrix(rnorm(50*60), nrow = 60, ncol = 50)
+y = rep.int(1, 60); y[21:40] = rep.int(2, 20); y[41:60] = rep.int(3, 20)
+for(i in 1:60) {
+  x[i,] = x[i,] + classmeans[y[i],]
+}
+```
+
+Separating on the first two principle components:
+
+```{r}
+PCA12 = prcomp(x)$x[,1:2]
+plot(PCA12, col = y)
+```
+
+K-means on the raw data gives decent results:
+
+```{r}
+km = kmeans(x, 3, nstart = 100)
+table(km$cluster,y)
+plot(PCA12, col = km$cluster)
+```
+
+If we use only two clusters, two of the real clusters are merged:
+
+```{r}
+km = kmeans(x, 2, nstart = 100)
+table(km$cluster,y)
+plot(PCA12, col = km$cluster)
+```
+
+With K = 4, one cluster is split in two:
+
+```{r}
+km = kmeans(x, 4, nstart = 100)
+table(km$cluster,y)
+plot(PCA12, col=km$cluster)
+```
+
+K-means on the first two principle components leads to results that are just as good as using the whole dataset:
+
+```{r}
+km = kmeans(PCA12, 3, nstart = 100)
+table(km$cluster,y)
+plot(PCA12, col = km$cluster)
+```

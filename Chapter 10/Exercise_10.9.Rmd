@@ -1,0 +1,27 @@
+Exercise 10.9
+-------------
+
+Hierarchical clustering on the raw data:
+
+```{r}
+attach(USArrests)
+clust = hclust(dist(USArrests))
+plot(clust)
+```
+
+And on the scaled data:
+
+```{r}
+scaledclust = hclust(dist(scale(USArrests)))
+plot(scaledclust)
+```
+
+The results are quite different:
+
+```{r}
+pred = cutree(clust, 3)
+scaledpred = cutree(scaledclust, 3)
+table(pred, scaledpred)
+```
+
+It is better to scale the variables. The Euclidean distance metric depends on the units and will also be sensitive to differences in variance. 
